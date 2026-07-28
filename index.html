@@ -1,269 +1,93 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Helper — How AI Is Transforming Human Lives Through Digital Products</title>
-<meta name="description" content="Real stories and research on how AI-powered digital products are helping people transform their lives. From personality discovery to behavioral change — learn what's working and which tools actually help.">
-<meta property="og:title" content="AI Helper — AI Transformation Through Digital Products">
-<meta property="og:description" content="How AI digital products are changing self-understanding, decision-making, and personal growth. Stories by personality type. Tools that actually work.">
-<meta property="og:url" content="https://aihelper.in">
-<link rel="canonical" href="https://aihelper.in/">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "WebSite",
-      "name": "AI Helper",
-      "url": "https://aihelper.in",
-      "description": "How AI is helping people transform their lives through digital products"
-    },
-    {
-      "@type": "Article",
-      "headline": "How AI Is Helping People Transform Their Lives Through Digital Products",
-      "description": "AI-powered digital products are enabling a new form of self-understanding and personal transformation. Personality analysis, behavioral pattern detection, and guided growth tools are changing how people understand themselves and make decisions.",
-      "author": { "@type": "Organization", "name": "AI Helper", "url": "https://aihelper.in" },
-      "dateModified": "2026-06-01",
-      "about": [
-        { "@type": "Thing", "name": "Artificial Intelligence" },
-        { "@type": "Thing", "name": "Personal Development" },
-        { "@type": "Thing", "name": "Digital Products" }
-      ]
-    }
-  ]
-}
-</script>
-<style>
-  :root {
-    --bg: #F0FDF4;
-    --bg2: #DCFCE7;
-    --text: #14532D;
-    --text2: #166534;
-    --accent: #16A34A;
-    --accent2: #7C3AED;
-    --muted: #6B7280;
-    --border: #D1FAE5;
-    --dark: #064E3B;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #FFFFFF; color: var(--text); font-family: 'Georgia', serif; line-height: 1.8; }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-
-  nav { background: #fff; border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-  nav .logo { font-size: 1rem; font-weight: bold; }
-  nav .logo span { color: var(--accent); }
-  nav .nav-right a { font-size: 0.85rem; color: var(--muted); margin-left: 1.5rem; font-family: sans-serif; }
-
-  .hero { background: var(--dark); color: #fff; padding: 5rem 2rem; text-align: center; }
-  .hero .tag { display: inline-block; background: var(--accent); color: #fff; font-family: sans-serif; font-size: 0.72rem; padding: 0.3rem 0.9rem; border-radius: 20px; margin-bottom: 1.5rem; }
-  .hero h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); max-width: 640px; margin: 0 auto 1rem; line-height: 1.25; }
-  .hero p { color: #A7F3D0; font-size: 1rem; max-width: 520px; margin: 0 auto 2rem; }
-  .hero .stat-row { display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap; margin-top: 2.5rem; }
-  .hero .stat { text-align: center; }
-  .hero .stat .num { font-size: 1.8rem; font-weight: bold; color: #4ADE80; }
-  .hero .stat .label { font-size: 0.75rem; font-family: sans-serif; color: #A7F3D0; }
-
-  .container { max-width: 780px; margin: 0 auto; padding: 0 1.5rem; }
-  .section { padding: 3.5rem 0; border-bottom: 1px solid var(--border); }
-  h2 { font-size: 1.7rem; margin-bottom: 1rem; line-height: 1.3; }
-  h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
-  p { margin-bottom: 1rem; color: #374151; }
-
-  /* STORY CARDS */
-  .story-card { border: 1px solid var(--border); background: var(--bg); padding: 1.75rem; margin-bottom: 1.25rem; border-radius: 8px; }
-  .story-card .type-badge { display: inline-block; font-family: sans-serif; font-size: 0.72rem; background: var(--accent); color: #fff; padding: 0.2rem 0.6rem; border-radius: 4px; margin-bottom: 1rem; }
-  .story-card h3 { font-size: 1.05rem; margin-bottom: 0.4rem; color: var(--dark); }
-  .story-card .story-body { font-size: 0.92rem; color: #374151; margin-bottom: 1rem; }
-  .story-card .outcome { font-size: 0.85rem; color: var(--accent); font-style: italic; border-left: 2px solid var(--accent); padding-left: 0.75rem; }
-  .story-card .tool-used { margin-top: 0.75rem; font-size: 0.8rem; color: var(--muted); font-family: sans-serif; }
-  .story-card .tool-used a { color: var(--accent2); }
-
-  /* HOW IT WORKS */
-  .steps { counter-reset: steps; }
-  .step { counter-increment: steps; display: flex; gap: 1.5rem; padding: 1.5rem 0; border-bottom: 1px solid var(--border); }
-  .step-num { font-family: sans-serif; font-size: 0.75rem; color: var(--accent); flex-shrink: 0; width: 1.5rem; padding-top: 0.2rem; }
-  .step h3 { font-size: 1rem; margin-bottom: 0.3rem; color: var(--dark); }
-  .step p { font-size: 0.9rem; margin: 0; }
-
-  /* TOOL TABLE */
-  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 1.5rem 0; }
-  th { background: var(--dark); color: #fff; padding: 0.65rem 1rem; text-align: left; font-family: sans-serif; font-size: 0.78rem; font-weight: normal; }
-  td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); color: #374151; }
-  tr:nth-child(even) td { background: var(--bg); }
-
-  .cta-box { background: var(--dark); color: #fff; padding: 3rem 2rem; border-radius: 10px; text-align: center; margin: 3rem 0; }
-  .cta-box h2 { color: #fff; margin-bottom: 0.75rem; }
-  .cta-box p { color: #A7F3D0; margin-bottom: 1.5rem; }
-  .cta-box a { display: inline-block; background: #4ADE80; color: var(--dark); padding: 0.75rem 2rem; border-radius: 6px; font-family: sans-serif; font-weight: 700; }
-
-  .research-block { background: var(--bg); border: 1px solid var(--border); padding: 1.5rem; border-radius: 6px; margin: 1.5rem 0; }
-  .research-block .cite { font-size: 0.75rem; font-family: sans-serif; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
-  .research-block p { margin: 0; font-size: 0.9rem; color: var(--dark); }
-
-  footer { background: var(--dark); color: #A7F3D0; padding: 2rem; text-align: center; font-family: sans-serif; font-size: 0.82rem; }
-  footer a { color: #4ADE80; }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="AI Helper implements practical AI automation and cybersecurity workflows for growing businesses.">
+  <meta property="og:title" content="AI Helper — AI systems that move your business forward">
+  <meta property="og:description" content="Book a call to implement AI Factory or Cyber Sentinel in your business.">
+  <meta property="og:url" content="https://aihelper.in/">
+  <link rel="canonical" href="https://aihelper.in/">
+  <link rel="icon" href="assets/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/favicon-32x32.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <title>AI Helper — Business-ready AI systems</title>
+  <style>
+    :root { --ink:#10112b; --muted:#666881; --line:#dedfec; --violet:#5d55e8; --violet-dark:#3933b8; --lilac:#eeecff; --paper:#fff; --navy:#191737; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; color:var(--ink); background:var(--paper); font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; line-height:1.5; }
+    a { color:inherit; }
+    .wrap { width:min(1120px,calc(100% - 40px)); margin:auto; }
+    .nav { min-height:76px; display:flex; justify-content:space-between; align-items:center; gap:24px; }
+    .brand { display:flex; align-items:center; gap:10px; text-decoration:none; font-size:1.1rem; font-weight:800; letter-spacing:-.04em; }
+    .brand img { width:34px; height:34px; object-fit:contain; }
+    .nav-links { display:flex; align-items:center; gap:28px; color:var(--muted); font-size:.9rem; }
+    .nav-links a { text-decoration:none; }
+    .button { display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:0 20px; border-radius:9px; background:var(--violet); color:#fff; font-weight:750; text-decoration:none; box-shadow:0 8px 18px rgba(93,85,232,.22); transition:.2s; }
+    .button:hover { background:var(--violet-dark); transform:translateY(-1px); text-decoration:none; }
+    .button.light { background:#fff; color:var(--violet-dark); box-shadow:none; }
+    .hero { overflow:hidden; position:relative; padding:90px 0 72px; background:linear-gradient(120deg,#f6f5ff 0%,#fff 55%,#eeedff 100%); border-top:1px solid #f0effb; }
+    .hero:after { content:""; position:absolute; width:480px; height:480px; right:-180px; top:-200px; background:radial-gradient(circle,rgba(112,99,255,.24),transparent 65%); pointer-events:none; }
+    .hero-grid { position:relative; z-index:1; display:grid; grid-template-columns:1.1fr .9fr; align-items:center; gap:55px; }
+    .eyebrow { display:inline-flex; align-items:center; gap:8px; margin-bottom:19px; color:var(--violet-dark); font-size:.78rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; }
+    .eyebrow:before { content:""; width:8px; height:8px; border-radius:50%; background:#51ba8b; box-shadow:0 0 0 4px rgba(81,186,139,.14); }
+    h1,h2,h3,p { margin-top:0; }
+    h1 { max-width:690px; margin-bottom:22px; font-size:clamp(2.8rem,6vw,5.35rem); line-height:.99; letter-spacing:-.072em; }
+    .lead { max-width:610px; margin-bottom:30px; color:var(--muted); font-size:1.13rem; line-height:1.7; }
+    .hero-actions { display:flex; flex-wrap:wrap; gap:14px; align-items:center; }
+    .text-link { color:var(--violet-dark); font-weight:750; text-underline-offset:4px; }
+    .proof { margin-top:38px; display:flex; flex-wrap:wrap; gap:22px; color:#4d4e65; font-size:.86rem; }
+    .proof span { display:flex; align-items:center; gap:7px; }.proof span:before { content:"✓"; color:#23a575; font-weight:900; }
+    .panel { position:relative; padding:24px; border:1px solid #dcd9ff; border-radius:18px; background:rgba(255,255,255,.85); box-shadow:0 24px 60px rgba(58,48,155,.13); }
+    .panel-head { display:flex; justify-content:space-between; margin-bottom:22px; font-size:.76rem; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
+    .pulse { color:#228963; }.pulse:before { content:""; display:inline-block; width:8px; height:8px; margin-right:6px; border-radius:50%; background:#38ba83; }
+    .flow { display:grid; gap:11px; }.flow-item { padding:14px; border-radius:10px; background:#f7f7fd; border:1px solid #ecebf7; }.flow-item strong { display:block; margin-bottom:3px; font-size:.94rem; }.flow-item small { color:var(--muted); }.arrow { height:10px; margin-left:20px; border-left:1px dashed #aaa8da; }
+    section { padding:90px 0; }.section-label { color:var(--violet-dark); font-size:.78rem; font-weight:850; letter-spacing:.13em; text-transform:uppercase; }.section-head { display:flex; justify-content:space-between; gap:30px; align-items:end; margin-bottom:38px; }.section-head h2 { max-width:650px; margin:8px 0 0; font-size:clamp(2rem,4vw,3.3rem); line-height:1.04; letter-spacing:-.055em; }.section-head p { max-width:340px; margin:0; color:var(--muted); }
+    .cards { display:grid; grid-template-columns:repeat(2,1fr); gap:18px; }.card { display:flex; flex-direction:column; min-height:310px; padding:30px; border:1px solid var(--line); border-radius:15px; }.card.security { background:var(--navy); color:#fff; border-color:var(--navy); }.card .number { color:#817cf0; font-size:.8rem; font-weight:850; letter-spacing:.1em; }.card h3 { margin:28px 0 12px; font-size:1.6rem; letter-spacing:-.045em; }.card p { max-width:440px; color:var(--muted); }.security p { color:#c6c5df; }.card ul { display:grid; gap:9px; padding:0; margin:auto 0 0; list-style:none; font-size:.9rem; }.card li:before { content:"→"; margin-right:9px; color:#817cf0; }
+    .process { background:#f7f6ff; }.steps { display:grid; grid-template-columns:repeat(3,1fr); gap:34px; }.step { padding-top:20px; border-top:2px solid #bbb7ff; }.step strong { display:block; margin:18px 0 9px; font-size:1.18rem; }.step p { margin:0; color:var(--muted); }.step-no { color:var(--violet-dark); font-size:.8rem; font-weight:850; letter-spacing:.1em; }
+    .cta { padding:84px 0; background:var(--violet); color:#fff; }.cta-grid { display:flex; justify-content:space-between; align-items:center; gap:40px; }.cta h2 { max-width:670px; margin:10px 0 14px; font-size:clamp(2.25rem,5vw,4rem); line-height:1; letter-spacing:-.065em; }.cta p { max-width:580px; margin:0; color:#e3e1ff; }.contact { min-width:240px; text-align:center; }.contact small { display:block; margin-top:12px; color:#d9d7ff; }
+    footer { padding:28px 0; color:var(--muted); font-size:.85rem; }.footer-row { display:flex; justify-content:space-between; gap:20px; }.footer-row a { color:var(--violet-dark); }
+    @media (max-width:760px) { .nav-links { display:none; }.hero { padding:65px 0 55px; }.hero-grid,.cards,.steps { grid-template-columns:1fr; }.hero-grid { gap:42px; }.panel { max-width:430px; }.section-head,.cta-grid { display:block; }.section-head p { margin-top:18px; }.cta { padding:60px 0; }.contact { margin-top:28px; text-align:left; }.footer-row { display:block; }.footer-row p + p { margin-top:10px; } }
+  </style>
 </head>
 <body>
+  <header class="wrap nav">
+    <a class="brand" href="/" aria-label="AI Helper home"><img src="assets/aihelper.png" alt="">aihelper</a>
+    <nav class="nav-links" aria-label="Primary navigation"><a href="#systems">Systems</a><a href="#process">How it works</a><a href="mailto:keshavbruh@gmail.com?subject=AI%20Helper%20consultation">Contact</a></nav>
+    <a class="button" href="mailto:keshavbruh@gmail.com?subject=AI%20Helper%20consultation">Book a call</a>
+  </header>
 
-<nav>
-  <div class="logo"><span>AI</span>Helper.in</div>
-  <div class="nav-right">
-    <a href="#stories">Stories</a>
-    <a href="#research">Research</a>
-    <a href="#tools">Tools</a>
-  </div>
-</nav>
-
-<div class="hero">
-  <div class="tag">AI + Human Transformation</div>
-  <h1>How AI Is Actually Helping People Change Their Lives</h1>
-  <p>Real cases, research, and tools — documenting the wave of AI-powered digital products that are giving people genuine self-understanding and behavioral insight for the first time.</p>
-  <div class="stat-row">
-    <div class="stat">
-      <div class="num">73%</div>
-      <div class="label">Report better self-understanding after AI personality analysis</div>
-    </div>
-    <div class="stat">
-      <div class="num">4.4×</div>
-      <div class="label">Higher conversion rate for AI-referred visitors vs traditional search</div>
-    </div>
-    <div class="stat">
-      <div class="num">527%</div>
-      <div class="label">Growth in AI-referred web sessions (Jan–May 2025, SparkToro)</div>
-    </div>
-  </div>
-</div>
-
-<div class="container">
-
-  <section class="section" id="stories">
-    <h2>Transformation Stories by Personality Type</h2>
-    <p>AI-powered personal development tools are not one-size-fits-all. The stories that emerge from tools like <a href="https://spiritualai.store" target="_blank">SpiritualAI</a> are deeply personality-specific. Here is what different types report.</p>
-
-    <div class="story-card">
-      <div class="type-badge">INFJ</div>
-      <h3>"I finally understood why I always knew things I couldn't explain"</h3>
-      <div class="story-body">For years, this pattern was a source of confusion and isolation. An INFJ user ran the SpiritualAI analysis expecting a personality label. Instead, they received a 3,000-word breakdown of Ni-dominant intuition — why it produces the experience of knowing without being able to trace the source of the knowledge, and what this means for decision-making, relationships, and purpose. "It didn't just tell me what I was. It explained how it works. That changed everything."</div>
-      <div class="outcome">"I stopped treating my intuition as a mystery and started using it as a system."</div>
-      <div class="tool-used">Tool used: <a href="https://spiritualai.store" target="_blank">SpiritualAI Spiritual Blueprint</a></div>
-    </div>
-
-    <div class="story-card">
-      <div class="type-badge">INTJ</div>
-      <h3>"I understood my self-sabotage pattern for the first time"</h3>
-      <div class="story-body">High-performing INTJ — successful by most metrics, consistently sabotaging relationships and partnerships. The SpiritualAI analysis identified the Te-Fi tension: a dominant drive to optimize and systematize everything (including people) running up against an underdeveloped emotional awareness. The Blueprint did not offer general advice. It pointed to the exact loop: Ti closes the system before Fi can update it, preventing genuine collaboration. "It named the thing I had been living in for 15 years but couldn't see."</div>
-      <div class="outcome">"I now catch the loop before it closes. That alone has changed three relationships."</div>
-      <div class="tool-used">Tool used: <a href="https://spiritualai.store" target="_blank">SpiritualAI Spiritual Blueprint</a></div>
-    </div>
-
-    <div class="story-card">
-      <div class="type-badge">ISFJ</div>
-      <h3>"AI helped me realize I had been living someone else's life"</h3>
-      <div class="story-body">An ISFJ teacher had spent 12 years in a role that looked right from the outside. The AI analysis surfaced the Sovereign pattern: a deep drive to serve, protect, and maintain — combined with an inability to prioritize one's own needs when others need help. The Shadow analysis was the turning point: "It described exactly how I had been using duty as a way to avoid asking what I actually want." The Blueprint did not tell them to quit their job. It gave them language for something they already knew but couldn't articulate.</div>
-      <div class="outcome">"I set boundaries for the first time in my life. Not because someone told me to — because I finally understood why I hadn't."</div>
-      <div class="tool-used">Tool used: <a href="https://spiritualai.store" target="_blank">SpiritualAI Spiritual Blueprint</a></div>
-    </div>
-  </section>
-
-  <section class="section" id="research">
-    <h2>What the Research Shows</h2>
-
-    <div class="research-block">
-      <div class="cite">AI Visibility Research — Ahrefs, December 2025</div>
-      <p>Brand mentions correlate 3× more strongly with AI search visibility than backlinks. YouTube mentions show the strongest correlation (0.737). This fundamentally changes how digital products build authority and trust in the AI search era.</p>
-    </div>
-
-    <div class="research-block">
-      <div class="cite">AI-Powered Personality Systems — General Observation</div>
-      <p>Traditional personality tests return a label. AI-powered systems like SpiritualAI return a narrative analysis — contextualizing the type, explaining the cognitive mechanics, and providing growth-path guidance calibrated to the individual's specific expression of their type. The depth difference is qualitative, not just quantitative.</p>
-    </div>
-
-    <div class="research-block">
-      <div class="cite">Digital Product Transformation Models — 2025–2026</div>
-      <p>The highest-performing AI digital products in the personal development space share three characteristics: (1) they produce an output the user cannot get from a free tool, (2) they address a specific behavioral pain point rather than offering generic advice, and (3) they are calibrated to personality type rather than assuming a universal user.</p>
-    </div>
-  </section>
-
-  <section class="section" id="tools">
-    <h2>AI Tools That Are Actually Helping People</h2>
-
-    <table>
-      <tr><th>Tool</th><th>What It Does</th><th>Best For</th><th>Access</th></tr>
-      <tr>
-        <td><strong><a href="https://spiritualai.store" target="_blank">SpiritualAI</a></strong></td>
-        <td>MBTI + archetype analysis, Spiritual Blueprint, behavioral pattern mapping</td>
-        <td>Deep self-understanding, shadow work, life direction</td>
-        <td>spiritualai.store (free blueprint)</td>
-      </tr>
-      <tr>
-        <td>SpiritualAI Ebooks</td>
-        <td>Type-specific written guides for each archetype's growth path</td>
-        <td>Sustained learning and integration of the Blueprint insights</td>
-        <td><a href="https://spiritualai.shop" target="_blank">spiritualai.shop</a></td>
-      </tr>
-      <tr>
-        <td>SpiritualAI Audiobooks</td>
-        <td>Audio versions of the archetype frameworks</td>
-        <td>Auditory learners, people who learn on the move</td>
-        <td><a href="https://spiritualai.shop" target="_blank">spiritualai.shop</a></td>
-      </tr>
-    </table>
-
-    <div class="cta-box">
-      <h2>Start With Your Spiritual Blueprint</h2>
-      <p>Free AI-powered personality analysis from SpiritualAI — your MBTI type, spiritual archetype, behavioral patterns, and growth path in a single, detailed report.</p>
-      <a href="https://spiritualai.store" target="_blank">Get Your Free Blueprint at spiritualai.store →</a>
-    </div>
-  </section>
-
-  <section class="section">
-    <h2>How AI Transformation Actually Works</h2>
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">01</div>
+  <main>
+    <section class="hero">
+      <div class="wrap hero-grid">
         <div>
-          <h3>Pattern Detection</h3>
-          <p>AI analysis surfaces behavioral patterns that are invisible from the inside. The pattern you're living in is usually the last thing you can see. An external system — trained on thousands of personality profiles — can identify it in minutes.</p>
+          <div class="eyebrow">Implementation partner for ambitious teams</div>
+          <h1>Put AI to work in your business.</h1>
+          <p class="lead">AI Helper helps you implement practical AI systems—so your team can automate the repetitive work, protect what matters, and focus on growth.</p>
+          <div class="hero-actions"><a class="button" href="mailto:keshavbruh@gmail.com?subject=AI%20Helper%20consultation">Book a call with Keshav</a><a class="text-link" href="#systems">Explore the systems ↓</a></div>
+          <div class="proof"><span>Built around your workflows</span><span>Human approval where it matters</span><span>Implementation, not just advice</span></div>
         </div>
+        <aside class="panel" aria-label="Example AI Helper workflow">
+          <div class="panel-head"><span>Your operations</span><span class="pulse">AI online</span></div>
+          <div class="flow"><div class="flow-item"><strong>Capture</strong><small>Leads, requests, signals, and security events arrive in one place.</small></div><div class="arrow"></div><div class="flow-item"><strong>Decide</strong><small>AI agents sort, research, and prepare the next best action.</small></div><div class="arrow"></div><div class="flow-item"><strong>Act—with control</strong><small>Your team approves important external actions before they happen.</small></div></div>
+        </aside>
       </div>
-      <div class="step">
-        <div class="step-num">02</div>
-        <div>
-          <h3>Language Creation</h3>
-          <p>Most people know something is off but cannot name it. AI gives you the language for what you already intuitively know. Naming the pattern is often the single most transformative moment — because you can only change what you can see.</p>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">03</div>
-        <div>
-          <h3>Path Calibration</h3>
-          <p>Generic self-help advice fails because it treats everyone the same. AI-powered growth tools calibrate their recommendations to your specific type — what works for an INTJ is actively counterproductive for an ISFP.</p>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">04</div>
-        <div>
-          <h3>Integration Through Products</h3>
-          <p>A single analysis session creates insight. Sustained engagement with type-specific ebooks, audiobooks, and AI guides creates integration. The transformation happens in the repetition, not the single revelation.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+    </section>
 
-</div>
+    <section class="wrap" id="systems">
+      <div class="section-head"><div><div class="section-label">Two systems. One practical outcome.</div><h2>Automation and security that fit the way you already work.</h2></div><p>Choose the system that solves your immediate problem—or combine both into a business-ready AI operating layer.</p></div>
+      <div class="cards">
+        <article class="card"><span class="number">01 / AI FACTORY</span><h3>Build an AI-powered operating system.</h3><p>Turn repeatable business work into dependable AI workflows across your teams, tools, and channels.</p><ul><li>Department agents for research, sales, marketing, and operations</li><li>Approval-gated outreach and other external actions</li><li>Task budgets, audit trails, and human control</li></ul></article>
+        <article class="card security"><span class="number">02 / CYBER SENTINEL</span><h3>See threats sooner. Respond with confidence.</h3><p>Bring AI-assisted cybersecurity workflows into your environment with monitored execution and clear risk controls.</p><ul><li>Log analysis and reverse-shell detection</li><li>Network reconnaissance and malware triage</li><li>Risk-rated commands and complete audit logging</li></ul></article>
+      </div>
+    </section>
 
-<footer>
-  <p>aihelper.in — Documenting how AI is transforming lives through digital products</p>
-  <p style="margin-top:0.5rem">
-    Featured tool: <a href="https://spiritualai.store" target="_blank">SpiritualAI</a> ·
-    <a href="https://spiritualai.shop" target="_blank">Products</a> ·
-    <a href="https://aidigitalproducts.in" target="_blank">AI Digital Products</a> ·
-    <a href="https://keshavbruh.in" target="_blank">Builder</a>
-  </p>
-</footer>
+    <section class="process" id="process"><div class="wrap"><div class="section-head"><div><div class="section-label">A clear path to implementation</div><h2>From your business problem to a working system.</h2></div></div><div class="steps"><article class="step"><span class="step-no">01 / DISCOVERY CALL</span><strong>Map the real opportunity</strong><p>We identify the workflow, constraints, integrations, and risks worth solving first.</p></article><article class="step"><span class="step-no">02 / IMPLEMENTATION</span><strong>Build around your team</strong><p>We configure the right AI Factory or Cyber Sentinel capabilities for your environment.</p></article><article class="step"><span class="step-no">03 / HANDOFF</span><strong>Operate with confidence</strong><p>You get a usable system with the controls and visibility your team needs.</p></article></div></div></section>
 
+    <section class="cta" id="book"><div class="wrap cta-grid"><div><div class="section-label" style="color:#d9d7ff">Ready when you are</div><h2>Let’s find the first workflow worth automating.</h2><p>Tell Keshav what your business needs. We’ll discuss the right tool, what implementation looks like, and the smallest useful place to start.</p></div><div class="contact"><a class="button light" href="mailto:keshavbruh@gmail.com?subject=AI%20Helper%20consultation&amp;body=Hi%20Keshav%2C%0A%0AI%27d%20like%20to%20discuss%20implementing%20AI%20Factory%20or%20Cyber%20Sentinel%20for%20my%20business.%0A%0ABusiness%3A%0AWhat%20we%20want%20to%20improve%3A%0A">Email Keshav to book</a><small>keshavbruh@gmail.com</small></div></div></section>
+  </main>
+
+  <footer class="wrap"><div class="footer-row"><p>© 2026 aihelper. AI systems implemented for real businesses.</p><p><a href="https://github.com/0x-Parzival/cyber-sentinel-suite" target="_blank" rel="noreferrer">Cyber Sentinel Suite ↗</a></p></div></footer>
 </body>
 </html>
