@@ -1,0 +1,22 @@
+aihelper.in {
+	# Landing page + dashboard + Twilio webhooks, TLS automatic.
+	header {
+		-Server
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), geolocation=(), payment=(), usb=()"
+		Content-Security-Policy "default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: https://cdn.shopify.com; media-src 'self' data:; object-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com"
+	}
+	@private path /dashboard* /company/*
+	header @private X-Robots-Tag "noindex, nofollow"
+	@media path /twilio/stream
+	reverse_proxy @media 127.0.0.1:8001 {
+		header_up X-Forwarded-For {remote_host}
+	}
+	reverse_proxy 127.0.0.1:8000 {
+		header_up X-Forwarded-For {remote_host}
+	}
+	encode zstd gzip
+}

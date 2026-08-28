@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>AI Helper — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --ink:#111216; --muted:#6d707a; --paper:#eff0f2; --card:#fff; --line:#d8d9de; --blue:#287dff; --teal:#39c8b5; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:radial-gradient(circle at 85% 12%,#8ce9e155,transparent 30%),var(--paper); color:var(--ink); font:16px/1.45 "Inter Tight",Arial,sans-serif; }
+    a { color:inherit; text-decoration:none; }
+    .page { max-width:1100px; margin:auto; padding:28px clamp(16px,4vw,44px) 70px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:10px 14px; border:1px solid #ffffffcc; border-radius:999px; background:#ffffffa8; backdrop-filter:blur(18px); box-shadow:0 10px 30px #182d4e12; }
+    .logo { display:flex; align-items:center; gap:10px; font-weight:600; }
+    .mark { display:grid; place-items:center; width:34px; height:34px; border-radius:10px; background:var(--ink); color:#fff; font-size:20px; }
+    .logo small { display:block; color:var(--muted); font-size:11px; font-weight:500; }
+    .button { display:inline-flex; align-items:center; gap:10px; padding:11px 18px; border:0; border-radius:999px; background:var(--ink); color:#fff; font:600 14px "Inter Tight",sans-serif; cursor:pointer; }
+    .button:hover { opacity:.9; }
+    h1 { margin:34px 0 4px; font-family:"Archivo Black",sans-serif; font-size:clamp(2rem,5vw,3.4rem); letter-spacing:-.05em; line-height:1; }
+    .sub { margin:0 0 26px; color:var(--muted); }
+    section.panel { border:1px solid #fff; border-radius:22px; background:#ffffffd9; box-shadow:0 14px 35px #182d4e10; padding:clamp(18px,3vw,30px); margin-bottom:22px; }
+    .panel-head { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:14px; }
+    h2 { margin:0; font-size:21px; letter-spacing:-.03em; }
+    .hint { color:var(--muted); font-size:13px; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th { text-align:left; color:var(--muted); font-size:12px; letter-spacing:.06em; text-transform:uppercase; padding:8px 10px; border-bottom:1px solid var(--line); }
+    td { padding:10px; border-bottom:1px solid #e6e7ec; vertical-align:top; }
+    tr.call { cursor:pointer; }
+    tr.call:hover td { background:#f5f7fb; }
+    tr.detail td { background:#f8f9fc; cursor:default; }
+    .pill { display:inline-block; padding:2px 10px; border-radius:999px; background:#eef0f4; color:#484b54; font-size:12px; font-weight:600; white-space:nowrap; }
+    .pill.completed { background:#e2f6ef; color:#177a5e; }
+    .pill.in-progress { background:#e7efff; color:#1d5dd8; }
+    .pill.failed,.pill.no-answer,.pill.canceled,.pill.busy { background:#fdeaea; color:#b3372f; }
+    .dir { font-weight:600; }
+    form.grid { display:grid; gap:12px; grid-template-columns:1fr 1fr; max-width:720px; }
+    label { display:grid; gap:5px; color:var(--muted); font-size:12px; font-weight:600; }
+    input,textarea { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:12px; outline:0; resize:vertical; background:#fff; color:var(--ink); font:15px "Inter Tight",Arial,sans-serif; }
+    input:focus,textarea:focus { border-color:var(--blue); }
+    .row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    #call-status,#settings-status,#company-status { font-size:13px; color:var(--muted); min-height:1em; }
+    .company-list { margin:16px 0 0; padding-left:18px; color:var(--muted); font-size:14px; }
+    .transcript { margin-top:8px; display:grid; gap:6px; }
+    .transcript p { max-width:80%; margin:0; padding:8px 11px; border-radius:11px; background:#eef0f4; color:#484b54; font-size:13px; }
+    .transcript p.assistant { justify-self:end; background:var(--ink); color:#fff; }
+    .summary { white-space:pre-wrap; color:#484b54; }
+    @media (max-width:700px) { form.grid { grid-template-columns:1fr; } .hide-sm { display:none; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <span class="logo"><span class="mark">✦</span><span>AI Helper<small>Owner dashboard</small></span></span>
+      <a class="button" href="/">View site ↗</a>
+    </header>
+
+    <h1>Dashboard</h1>
+    <p class="sub">Every call handled on your behalf — plus the controls to make your agent act.</p>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Place an outbound call</h2><span class="hint">E.164 format, e.g. +14155550123</span></div>
+      <form id="call-form" class="grid">
+        <label>To<input name="to" type="tel" placeholder="+14155550123" required></label>
+        <label>What should the agent achieve?<textarea name="context" rows="2" maxlength="500" placeholder="Remind Priya about tomorrow's 10am estimate appointment and confirm she can still make it."></textarea></label>
+        <div class="row"><button class="button" type="submit">Call now</button><span id="call-status"></span></div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Call log</h2><span class="hint" id="log-refreshed"></span></div>
+      <table aria-label="Recent calls">
+        <thead><tr><th>When</th><th>Dir</th><th>Number</th><th>Status</th><th class="hide-sm">Summary</th></tr></thead>
+        <tbody id="calls"><tr><td colspan="5">Loading…</td></tr></tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Agent settings</h2></div>
+      <form id="settings-form" class="grid">
+        <label>Business name<input name="business_name" maxlength="80" required></label>
+        <label>Summary SMS goes to<input name="owner_number" type="tel" placeholder="+14155550123"></label>
+        <label style="grid-column:1/-1">Greeting callers hear<textarea name="greeting" rows="2" maxlength="500" placeholder="Leave blank for the default greeting."></textarea></label>
+        <div class="row"><button class="button" type="submit">Save settings</button><span id="settings-status"></span></div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Company verification page</h2><span class="hint">Creates /company/company-name</span></div>
+      <form id="company-form" class="grid">
+        <label>Company name<input name="name" maxlength="80" autocomplete="organization" required></label>
+        <label>Twilio number for incoming calls<input name="phone_number" type="tel" placeholder="+14155550123"></label>
+        <label>Verification password<input name="password" type="password" minlength="15" maxlength="128" autocomplete="new-password" required></label>
+        <div class="row"><button class="button" type="submit">Create page</button><span id="company-status"></span></div>
+      </form>
+      <ul id="companies" class="company-list"></ul>
+    </section>
+  </main>
+
+  <script>
+    const $ = (sel) => document.querySelector(sel);
+    const esc = (text) => { const el = document.createElement('span'); el.textContent = text ?? ''; return el.innerHTML; };
+    const when = (ts) => new Date(ts * 1000).toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+    let expanded = new Set();
+
+    async function api(path, options = {}) {
+      const response = await fetch(path, { ...options, headers: { 'Content-Type': 'application/json', ...(options.headers || {}) } });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok && response.status !== 401) throw new Error(data.error || 'Request failed');
+      return { ok: response.ok, data };
+    }
+
+    function rowHtml(call) {
+      const open = expanded.has(call.sid);
+      const short = call.summary ? call.summary.split('\n')[0] : '—';
+      let html = `<tr class="call" data-sid="${esc(call.sid)}">
+        <td>${esc(when(call.created_at))}</td>
+        <td><span class="dir">${call.direction === 'inbound' ? '↓ In' : '↑ Out'}</span></td>
+        <td>${esc(call.number || 'unknown')}</td>
+        <td><span class="pill ${esc(call.status)}">${esc(call.status)}</span></td>
+        <td class="hide-sm">${open ? '<em>click to collapse</em>' : esc(short)}</td>
+      </tr>`;
+      if (open) {
+        const transcript = (call.transcript || []).map((m) => `<p class="${esc(m.role)}">${esc(m.content)}</p>`).join('') || '<p class="assistant">No conversation captured.</p>';
+        html += `<tr class="detail"><td colspan="5"><strong>Summary</strong><div class="summary">${esc(call.summary || 'Not available yet.')}</div><strong>Transcript</strong><div class="transcript">${transcript}</div></td></tr>`;
+      }
+      return html;
+    }
+
+    async function loadCalls() {
+      try {
+        const { ok, data } = await api('/api/calls');
+        if (!ok) { $('#calls').innerHTML = '<tr><td colspan="5">Login required — reload the page and enter your dashboard password.</td></tr>'; return; }
+        $('#log-refreshed').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+        const calls = data.calls || [];
+        $('#calls').innerHTML = calls.length ? calls.map(rowHtml).join('') : '<tr><td colspan="5">No calls yet. The log fills in as your agent answers or places calls.</td></tr>';
+      } catch (error) {
+        $('#calls').innerHTML = `<tr><td colspan="5">${esc(error.message)}</td></tr>`;
+      }
+    }
+
+    document.querySelector('#calls').addEventListener('click', (event) => {
+      const row = event.target.closest('tr.call');
+      if (!row) return;
+      const sid = row.dataset.sid;
+      expanded.has(sid) ? expanded.delete(sid) : expanded.add(sid);
+      loadCalls();
+    });
+
+    document.querySelector('#call-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const status = $('#call-status');
+      status.textContent = 'Starting call…';
+      try {
+        const body = JSON.stringify({ to: event.target.to.value.trim(), context: event.target.context.value.trim() });
+        const { ok, data } = await api('/api/calls/outbound', { method: 'POST', body });
+        if (!ok) throw new Error(data.error || 'Call could not be started');
+        status.textContent = `Call queued (${data.callSid}). It will appear in the log below.`;
+        event.target.reset();
+        setTimeout(loadCalls, 1500);
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    });
+
+    async function loadSettings() {
+      const { ok, data } = await api('/api/settings');
+      if (!ok) return;
+      const form = document.querySelector('#settings-form');
+      form.business_name.value = data.business_name || '';
+      form.greeting.value = data.greeting || '';
+      form.owner_number.value = data.owner_number || '';
+    }
+
+    async function loadCompanies() {
+      const { ok, data } = await api('/api/companies');
+      if (!ok) return;
+      $('#companies').innerHTML = (data.companies || []).map((company) => `<li><a href="/company/${esc(company.slug)}" target="_blank" rel="noreferrer">${esc(company.name)}</a> · username: ${esc(company.name)}</li>`).join('');
+    }
+
+    document.querySelector('#company-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const status = $('#company-status');
+      status.textContent = 'Creating…';
+      try {
+        const body = JSON.stringify({ name: event.target.name.value.trim(), phone_number: event.target.phone_number.value.trim(), password: event.target.password.value });
+        const { ok, data } = await api('/api/companies', { method: 'POST', body });
+        if (!ok) throw new Error(data.error || 'Could not create verification page');
+        status.textContent = `Created /company/${data.company.slug}.`;
+        event.target.reset();
+        loadCompanies();
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    });
+
+    document.querySelector('#settings-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const status = $('#settings-status');
+      status.textContent = 'Saving…';
+      try {
+        const body = JSON.stringify({
+          business_name: event.target.business_name.value.trim(),
+          greeting: event.target.greeting.value.trim(),
+          owner_number: event.target.owner_number.value.trim(),
+        });
+        const { ok, data } = await api('/api/settings', { method: 'POST', body });
+        if (!ok) throw new Error(data.error || 'Could not save');
+        status.textContent = 'Saved.';
+        loadSettings();
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    });
+
+    loadCalls();
+    loadSettings();
+    loadCompanies();
+    setInterval(loadCalls, 10000);
+  </script>
+</body>
+</html>

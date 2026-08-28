@@ -1,0 +1,15 @@
+[Unit]
+Description=AI Helper SenseVoice emotion worker
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/aihelper
+EnvironmentFile=/opt/aihelper/.env
+ExecStart=/usr/bin/python3 /opt/aihelper/emotion_worker.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

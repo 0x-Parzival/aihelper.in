@@ -1,0 +1,21 @@
+[Unit]
+Description=AI Helper calling agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/aihelper
+ExecStart=/usr/bin/python3 /opt/aihelper/server.py
+Restart=always
+RestartSec=3
+# secrets live in /opt/aihelper/.env (root-owned, 600)
+NoNewPrivileges=true
+ProtectSystem=full
+ReadWritePaths=/opt/aihelper
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

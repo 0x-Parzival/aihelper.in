@@ -1,0 +1,5 @@
+.vercel
+__pycache__/
+.env
+aihelper.db
+aihelper.db-*
