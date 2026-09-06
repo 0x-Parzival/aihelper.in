@@ -1,5 +1,7 @@
 .vercel
+.venv/
 __pycache__/
 .env
+.env*.swp
 aihelper.db
 aihelper.db-*

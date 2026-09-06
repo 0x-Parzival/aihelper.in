@@ -10,7 +10,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import numpy as np
 from funasr import AutoModel
 
-MODEL = AutoModel(model="iic/SenseVoiceSmall", trust_remote_code=True, device=os.environ.get("SENSEVOICE_DEVICE", "cpu"))
+MODEL = AutoModel(
+    model=os.environ.get("SENSEVOICE_MODEL", "FunAudioLLM/SenseVoiceSmall"),
+    hub=os.environ.get("SENSEVOICE_HUB", "hf"),
+    trust_remote_code=True,
+    device=os.environ.get("SENSEVOICE_DEVICE", "cpu"),
+    disable_update=True,
+)
 PORT = int(os.environ.get("EMOTION_WORKER_PORT", "8010"))
 TAGS = re.compile(r"<\|([A-Z]+)\|>")
 
@@ -33,6 +39,17 @@ def analyze(pcm):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path != "/health":
+            self.send_error(404)
+            return
+        payload = b'{"ok":true}'
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
     def do_POST(self):
         length = int(self.headers.get("Content-Length", "0"))
         if self.path != "/analyze" or self.headers.get("X-Sample-Rate") != "16000" or not 0 < length <= 320_000:

@@ -1,0 +1,16 @@
+{
+  "name": "aihelper-auth",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node server.mjs",
+    "migrate": "npx auth@latest migrate --config ./auth.mjs"
+  },
+  "dependencies": {
+    "better-auth": "^1.7.0",
+    "better-sqlite3": "^12.0.0",
+    "express": "^5.1.0",
+    "nodemailer": "^9.0.6"
+  }
+}

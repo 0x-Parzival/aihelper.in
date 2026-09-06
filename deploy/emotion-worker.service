@@ -7,7 +7,11 @@ Type=simple
 User=www-data
 WorkingDirectory=/opt/aihelper
 EnvironmentFile=/opt/aihelper/.env
-ExecStart=/usr/bin/python3 /opt/aihelper/emotion_worker.py
+Environment=HOME=/opt/aihelper
+Environment=MODELSCOPE_CACHE=/opt/aihelper/.cache/modelscope
+Environment=HF_HOME=/opt/aihelper/.cache/huggingface
+Environment=PATH=/opt/aihelper/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/opt/aihelper/.venv/bin/python /opt/aihelper/emotion_worker.py
 Restart=always
 RestartSec=3
 

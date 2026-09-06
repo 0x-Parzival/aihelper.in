@@ -1,5 +1,5 @@
 aihelper.in {
-	# Landing page + dashboard + Twilio webhooks, TLS automatic.
+	# Landing page + dashboard + Plivo Voice webhooks, TLS automatic.
 	header {
 		-Server
 		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
@@ -9,9 +9,11 @@ aihelper.in {
 		Permissions-Policy "camera=(), geolocation=(), payment=(), usb=()"
 		Content-Security-Policy "default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: https://cdn.shopify.com; media-src 'self' data:; object-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com"
 	}
-	@private path /dashboard* /company/*
+	@private path /dashboard* /company/* /spiritualai*
 	header @private X-Robots-Tag "noindex, nofollow"
-	@media path /twilio/stream
+	@auth path /auth/*
+	reverse_proxy @auth 127.0.0.1:8002
+	@media path /twilio/stream /plivo/stream
 	reverse_proxy @media 127.0.0.1:8001 {
 		header_up X-Forwarded-For {remote_host}
 	}

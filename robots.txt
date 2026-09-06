@@ -3,5 +3,6 @@ Allow: /
 Disallow: /dashboard/
 Disallow: /api/
 Disallow: /twilio/
+Disallow: /plivo/
 
 Sitemap: https://aihelper.in/sitemap.xml

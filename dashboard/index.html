@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
+  <link rel="icon" href="/assets/favicon.ico" sizes="any">
+  <link rel="icon" href="/assets/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
   <title>AI Helper — Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,6 +51,25 @@
     .transcript p { max-width:80%; margin:0; padding:8px 11px; border-radius:11px; background:#eef0f4; color:#484b54; font-size:13px; }
     .transcript p.assistant { justify-self:end; background:var(--ink); color:#fff; }
     .summary { white-space:pre-wrap; color:#484b54; }
+    .provider-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .provider-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:0 0 16px; }
+    .summary-stat { padding:12px 14px; border-radius:14px; background:#f5f7fb; border:1px solid #e5e8f0; }
+    .summary-stat strong { display:block; font-size:22px; letter-spacing:-.05em; }
+    .summary-stat span { color:var(--muted); font-size:12px; }
+    .provider { border:1px solid var(--line); border-radius:16px; padding:16px; background:#fff; }
+    .provider-top { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .provider h3 { margin:0; font-size:16px; }
+    .provider p { margin:9px 0 0; color:var(--muted); font-size:13px; }
+    .provider-meta { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; font-size:12px; }
+    .provider a { color:#1d5dd8; font-weight:600; }
+    .pill.healthy { background:#e2f6ef; color:#177a5e; }
+    .pill.unverified { background:#e7efff; color:#1d5dd8; }
+    .pill.issue,.pill.not-configured { background:#fdeaea; color:#b3372f; }
+    .pill.trial { background:#fff2cf; color:#8a5a00; }
+    .pill.active { background:#e2f6ef; color:#177a5e; }
+    .pill.payment-required { background:#fdeaea; color:#b3372f; }
+    .pill.quota-reached { background:#fff2cf; color:#8a5a00; }
+    @media (max-width:700px) { .provider-grid,.provider-summary { grid-template-columns:1fr; } }
     @media (max-width:700px) { form.grid { grid-template-columns:1fr; } .hide-sm { display:none; } }
   </style>
 </head>
@@ -60,6 +82,12 @@
 
     <h1>Dashboard</h1>
     <p class="sub">Every call handled on your behalf — plus the controls to make your agent act.</p>
+
+    <section class="panel">
+      <div class="panel-head"><div><h2>API health &amp; usage</h2><span class="hint" id="provider-note">Loading provider status…</span></div><button class="button" id="check-providers" type="button">Run health check</button></div>
+      <div id="provider-summary" class="provider-summary" aria-live="polite"></div>
+      <div id="providers" class="provider-grid" aria-live="polite"></div>
+    </section>
 
     <section class="panel">
       <div class="panel-head"><h2>Place an outbound call</h2><span class="hint">E.164 format, e.g. +14155550123</span></div>
@@ -82,18 +110,20 @@
       <div class="panel-head"><h2>Agent settings</h2></div>
       <form id="settings-form" class="grid">
         <label>Business name<input name="business_name" maxlength="80" required></label>
-        <label>Summary SMS goes to<input name="owner_number" type="tel" placeholder="+14155550123"></label>
+        <label>Call language<select name="call_mode"><option value="english">English</option><option value="hindi">Hindi</option></select></label>
         <label style="grid-column:1/-1">Greeting callers hear<textarea name="greeting" rows="2" maxlength="500" placeholder="Leave blank for the default greeting."></textarea></label>
+        <label style="grid-column:1/-1">Business knowledge<textarea name="business_knowledge" rows="4" maxlength="4000" placeholder="Approved facts, services, areas served, requirements, and FAQs."></textarea></label>
         <div class="row"><button class="button" type="submit">Save settings</button><span id="settings-status"></span></div>
       </form>
     </section>
 
     <section class="panel">
-      <div class="panel-head"><h2>Company verification page</h2><span class="hint">Creates /company/company-name</span></div>
+      <div class="panel-head"><h2>Company protected page</h2><span class="hint">Creates an email/password account and /company/company-name</span></div>
       <form id="company-form" class="grid">
         <label>Company name<input name="name" maxlength="80" autocomplete="organization" required></label>
-        <label>Twilio number for incoming calls<input name="phone_number" type="tel" placeholder="+14155550123"></label>
-        <label>Verification password<input name="password" type="password" minlength="15" maxlength="128" autocomplete="new-password" required></label>
+        <label>Owner email<input name="owner_email" type="email" autocomplete="email" required></label>
+        <label>Plivo number for incoming calls<input name="phone_number" type="tel" placeholder="+14155550123"></label>
+        <label>Initial password<input name="password" type="password" minlength="15" maxlength="128" autocomplete="new-password" required></label>
         <div class="row"><button class="button" type="submit">Create page</button><span id="company-status"></span></div>
       </form>
       <ul id="companies" class="company-list"></ul>
@@ -125,9 +155,49 @@
       </tr>`;
       if (open) {
         const transcript = (call.transcript || []).map((m) => `<p class="${esc(m.role)}">${esc(m.content)}</p>`).join('') || '<p class="assistant">No conversation captured.</p>';
-        html += `<tr class="detail"><td colspan="5"><strong>Summary</strong><div class="summary">${esc(call.summary || 'Not available yet.')}</div><strong>Transcript</strong><div class="transcript">${transcript}</div></td></tr>`;
+        const recording = call.recording_url ? `<strong>Recording</strong><div><audio controls preload="metadata" src="/api/calls/${encodeURIComponent(call.sid)}/recording"></audio>${call.recording_duration ? ` <span>${Math.round(Number(call.recording_duration))} seconds</span>` : ''}</div>` : '';
+        html += `<tr class="detail"><td colspan="5"><strong>Summary</strong><div class="summary">${esc(call.summary || 'Not available yet.')}</div>${recording}<strong>Transcript</strong><div class="transcript">${transcript}</div></td></tr>`;
       }
       return html;
+    }
+
+    const providerStatus = (status) => ({ healthy:'Working', issue:'Needs attention', unverified:'Not checked', 'not-configured':'Not configured' }[status] || status);
+    const billingStatus = (state) => ({ trial:'Free trial', active:'Payment active', 'payment-required':'Payment needed', 'quota-reached':'Quota reached', 'not-active':'Not active', issue:'Needs attention', unknown:'Not checked' }[state] || 'Not checked');
+    function usageText(usage) {
+      const entries = Object.entries(usage || {});
+      const format = (metric, value) => metric === 'minutes' ? `${Number(value).toFixed(1)} minutes` : `${Number(value).toLocaleString()} ${metric}`;
+      return entries.length ? entries.map(([metric, value]) => format(metric, value)).join(' · ') : 'No measured usage yet';
+    }
+    function renderProviders(data) {
+      $('#provider-note').textContent = data.note || `Locally measured usage for the last ${data.period_days || 30} days.`;
+      const providers = data.providers || [];
+      const total = providers.length;
+      const working = providers.filter((p) => p.status === 'healthy').length;
+      const attention = providers.filter((p) => p.status === 'issue' || p.status === 'not-configured').length;
+      const payment = providers.filter((p) => ['trial', 'payment-required', 'quota-reached'].includes((p.billing || {}).state)).length;
+      $('#provider-summary').innerHTML = [
+        [total, 'API services tracked'], [working, 'working now'], [attention, 'need attention'], [payment, 'trial / payment status']
+      ].map(([value, label]) => `<div class="summary-stat"><strong>${value}</strong><span>${label}</span></div>`).join('');
+      $('#providers').innerHTML = providers.map((provider) => `<article class="provider">
+        <div class="provider-top"><h3>${esc(provider.name)}</h3><span class="pill ${esc(provider.status)}">${esc(providerStatus(provider.status))}</span></div>
+        <p>${esc(provider.message)}</p>
+        <div class="provider-meta"><span>Usage: ${esc(usageText(provider.usage))}</span><span class="pill ${esc((provider.billing || {}).state || 'unknown')}">${esc(billingStatus((provider.billing || {}).state))}</span></div>
+        <p>${esc((provider.billing || {}).detail || 'Open the billing portal for payment details.')}</p>
+        <p><a href="${esc(provider.billing_url)}" target="_blank" rel="noreferrer">Open billing / trial balance ↗</a></p>
+      </article>`).join('') || '<p>No providers are configured yet.</p>';
+    }
+    async function loadProviders(check = false) {
+      const button = $('#check-providers');
+      if (check) { button.disabled = true; button.textContent = 'Checking…'; }
+      try {
+        const { ok, data } = await api(check ? '/api/providers/check' : '/api/providers', { method: check ? 'POST' : 'GET', body: check ? '{}' : undefined });
+        if (!ok) throw new Error(data.error || 'Login required');
+        renderProviders(data);
+      } catch (error) {
+        $('#provider-note').textContent = error.message;
+      } finally {
+        button.disabled = false; button.textContent = 'Run health check';
+      }
     }
 
     async function loadCalls() {
@@ -172,13 +242,14 @@
       const form = document.querySelector('#settings-form');
       form.business_name.value = data.business_name || '';
       form.greeting.value = data.greeting || '';
-      form.owner_number.value = data.owner_number || '';
+      form.business_knowledge.value = data.business_knowledge || '';
+      form.call_mode.value = data.call_mode || 'english';
     }
 
     async function loadCompanies() {
       const { ok, data } = await api('/api/companies');
       if (!ok) return;
-      $('#companies').innerHTML = (data.companies || []).map((company) => `<li><a href="/company/${esc(company.slug)}" target="_blank" rel="noreferrer">${esc(company.name)}</a> · username: ${esc(company.name)}</li>`).join('');
+      $('#companies').innerHTML = (data.companies || []).map((company) => `<li><a href="/company/${esc(company.slug)}" target="_blank" rel="noreferrer">${esc(company.name)}</a> · owner: ${esc(company.owner_email || 'not migrated')}</li>`).join('');
     }
 
     document.querySelector('#company-form').addEventListener('submit', async (event) => {
@@ -186,7 +257,7 @@
       const status = $('#company-status');
       status.textContent = 'Creating…';
       try {
-        const body = JSON.stringify({ name: event.target.name.value.trim(), phone_number: event.target.phone_number.value.trim(), password: event.target.password.value });
+        const body = JSON.stringify({ name: event.target.name.value.trim(), owner_email: event.target.owner_email.value.trim(), phone_number: event.target.phone_number.value.trim(), password: event.target.password.value });
         const { ok, data } = await api('/api/companies', { method: 'POST', body });
         if (!ok) throw new Error(data.error || 'Could not create verification page');
         status.textContent = `Created /company/${data.company.slug}.`;
@@ -205,7 +276,8 @@
         const body = JSON.stringify({
           business_name: event.target.business_name.value.trim(),
           greeting: event.target.greeting.value.trim(),
-          owner_number: event.target.owner_number.value.trim(),
+          business_knowledge: event.target.business_knowledge.value.trim(),
+          call_mode: event.target.call_mode.value,
         });
         const { ok, data } = await api('/api/settings', { method: 'POST', body });
         if (!ok) throw new Error(data.error || 'Could not save');
@@ -217,8 +289,10 @@
     });
 
     loadCalls();
+    loadProviders();
     loadSettings();
     loadCompanies();
+    $('#check-providers').addEventListener('click', () => loadProviders(true));
     setInterval(loadCalls, 10000);
   </script>
 </body>
