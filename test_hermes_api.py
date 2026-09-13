@@ -43,6 +43,10 @@ class HermesAPITest(unittest.TestCase):
             self.assertEqual(status, 200)
             self.assertEqual(result["recording_duration"], 10)
             self.assertEqual(result["recording_url"], "https://example.com/recording.mp3")
+            status, payment = self.request("POST", f"/internal/ai-helper/leads/{lead['id']}/payments", {"amount": "100"})
+            self.assertEqual(status, 201)
+            status, result = self.request("POST", f"/internal/ai-helper/payments/{payment['id']}/mark-paid")
+            self.assertEqual((status, result["status"]), (200, "payment_received"))
             status, _ = self.request("GET", "/internal/ai-helper/calls/test-call", secret="wrong")
             self.assertEqual(status, 401)
             for prompt in (server.agent_system(), Campaign.from_env("AI Helper").monthly_price):

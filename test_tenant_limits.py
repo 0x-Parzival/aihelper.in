@@ -128,7 +128,7 @@ class BusinessLimitsTest(unittest.TestCase):
             limits.bind(conn, "one", "CAwait")
             conn.execute("UPDATE call_reservations SET answered_at=? WHERE id='one'", (time.time() - row["seconds"],))
         socket = Mock(close=AsyncMock())
-        async def wait_forever(*args):
+        async def wait_forever(*args, **kwargs):
             await asyncio.Future()
         with patch.object(server, "_run_live_call", side_effect=wait_forever), patch.object(server, "terminate_call") as end:
             asyncio.run(server.run_live_call(socket, {"start": {"callSid": "CAwait"}}))
@@ -194,6 +194,74 @@ class BusinessLimitsTest(unittest.TestCase):
             handler.send_error = Mock()
             self.assertIsNone(handler.send_head())
             handler.send_error.assert_called_once_with(404)
+
+    def test_recording_prefetch_caches_while_url_fresh(self):
+        seen = []
+
+        class SyncThread:
+            def __init__(self, target, daemon=None, name=None):
+                seen.append(target)
+
+            def start(self):
+                seen[-1]()
+
+        with patch.object(server.threading, "Thread", SyncThread), patch.object(server, "cached_recording", return_value=(b"x", "audio/mpeg")) as cached:
+            server.prefetch_recording("CA1", "https://example.com/r.mp3")
+        cached.assert_called_once_with("CA1", "https://example.com/r.mp3")
+        server.prefetch_recording("", "")
+        server.prefetch_recording("CA1", "")
+
+    def test_expired_telnyx_recording_refreshes_and_plays(self):
+        import urllib.error
+
+        class FakeResp:
+            def __init__(self, payload):
+                self.payload = payload
+                self.headers = {"Content-Type": "audio/mpeg"}
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def read(self):
+                return self.payload
+
+        expired = urllib.error.HTTPError("https://old", 403, "expired", {}, io.BytesIO())
+        with tempfile.TemporaryDirectory() as directory, patch.object(server, "RECORDINGS_DIR", Path(directory)):
+            with patch("urllib.request.urlopen", side_effect=[expired, FakeResp(b"fresh-audio")]), patch.object(server, "refresh_telnyx_recording", return_value="https://fresh") as refresh:
+                payload, ctype = server.cached_recording("v3:expired", "https://old")
+            self.assertEqual((payload, ctype), (b"fresh-audio", "audio/mpeg"))
+            refresh.assert_called_once_with("v3:expired")
+            self.assertTrue((Path(directory) / "v3:expired.mp3").exists())
+
+    def test_company_recording_plays_for_own_call_only(self):
+        server.start_call("CArec", "outbound", "+12025550999", "ctx", company_slug="alpha")
+        with server.db() as conn:
+            conn.execute("UPDATE calls SET recording_url=? WHERE sid='CArec'", ("https://example.com/r.mp3",))
+
+        def get(path):
+            handler = object.__new__(server.Handler)
+            handler.path = path
+            handler.headers = {}
+            handler.rfile, handler.wfile = io.BytesIO(b""), io.BytesIO()
+            handler.send_response, handler.send_header, handler.end_headers, handler.send_error = Mock(), Mock(), Mock(), Mock()
+            with patch.object(server.Handler, "require_company", return_value=True), patch.object(server, "cached_recording", return_value=(b"0123456789", "audio/mpeg")):
+                handler.do_GET()
+            return handler
+
+        own = get("/company/alpha/calls/CArec/recording")
+        own.send_response.assert_called_with(200)
+        self.assertEqual(own.wfile.getvalue(), b"0123456789")
+
+        foreign = get("/company/beta/calls/CArec/recording")
+        foreign.send_error.assert_called_with(404)
+        foreign.send_response.assert_not_called()
+
+        missing = get("/company/alpha/calls/NOPE/recording")
+        missing.send_error.assert_called_with(404)
+        missing.send_response.assert_not_called()
 
     def test_unlimited_still_has_call_limits_and_expired_periods_stop(self):
         with server.db() as conn:

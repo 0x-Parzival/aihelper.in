@@ -119,11 +119,11 @@ def reserve(conn, config, identifier):
 
 
 def bind(conn, identifier, sid):
-    if not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", sid):
-        raise ValueError("Invalid provider call ID")
     row = conn.execute("SELECT * FROM call_reservations WHERE id=?", (identifier,)).fetchone()
     if not row or (row["sid"] and row["sid"] != sid):
         raise ValueError("Call does not match its reservation")
+    if not re.fullmatch(r"[A-Za-z0-9:_-]{1,160}", sid):
+        raise ValueError("Invalid provider call ID")
     call = conn.execute("SELECT company_slug FROM calls WHERE sid=?", (sid,)).fetchone()
     if call and call["company_slug"] != row["slug"]:
         raise ValueError("Call belongs to another business")

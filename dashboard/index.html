@@ -202,6 +202,10 @@
 
     async function loadCalls() {
       try {
+        // Never rebuild the table mid-playback: re-rendering destroys the
+        // <audio> element and recordings stop seconds after pressing play.
+        const playing = [...document.querySelectorAll('#calls audio')].some((el) => !el.paused && !el.ended);
+        if (playing) return;
         const { ok, data } = await api('/api/calls');
         if (!ok) { $('#calls').innerHTML = '<tr><td colspan="5">Login required — reload the page and enter your dashboard password.</td></tr>'; return; }
         $('#log-refreshed').textContent = `Updated ${new Date().toLocaleTimeString()}`;

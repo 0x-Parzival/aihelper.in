@@ -13,7 +13,7 @@ aihelper.in {
 	header @private X-Robots-Tag "noindex, nofollow"
 	@auth path /auth/*
 	reverse_proxy @auth 127.0.0.1:8002
-	@media path /twilio/stream /plivo/stream
+	@media path /twilio/stream /plivo/stream /telnyx/stream
 	reverse_proxy @media 127.0.0.1:8001 {
 		header_up X-Forwarded-For {remote_host}
 	}
