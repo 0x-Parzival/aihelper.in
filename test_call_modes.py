@@ -8,22 +8,30 @@ import server
 
 
 class CallModeTests(unittest.TestCase):
-    def test_hindi_mode_uses_sarvam_and_hindi_prompt(self):
+    def test_groq_rate_limit_waits_for_provider_retry_window(self):
+        error = urllib.error.HTTPError("https://api.groq.com", 429, "Too Many Requests", {"Retry-After": "7"}, None)
+        self.assertEqual(server.groq_retry_delay(error, 1.5), 7)
+
+    def test_hindi_mode_uses_assemblyai_and_hindi_prompt(self):
         with tempfile.TemporaryDirectory() as directory:
             original = server.DB_PATH
             server.DB_PATH = Path(directory) / "test.db"
             try:
                 server.init_db()
                 server.set_settings({"call_mode": "hindi"})
-                self.assertEqual(server.call_mode()["stt_provider"], "sarvam")
+                self.assertEqual(server.call_mode()["stt_provider"], "assemblyai")
                 self.assertIn("Hindi", server.agent_system())
                 self.assertIn("adult female", server.agent_system())
                 self.assertIn("feminine first-person grammar", server.agent_system())
-                self.assertIn("₹10,000/month for up to 1,000 call minutes", server.agent_system())
-                self.assertIn("do not mention AI Helper", server.agent_system())
+                self.assertIn("$200 USD", server.agent_system())
+                self.assertIn("$500 USD", server.agent_system())
+                self.assertIn("commercial reason for calling", server.agent_system())
+                self.assertIn("problem and desired outcome", server.agent_system())
+                self.assertIn("highest suitable approved plan", server.agent_system())
+                self.assertIn("let them decide", server.agent_system())
                 self.assertIn("one idea per sentence", server.agent_system())
-                self.assertIn("longer pause after objections", server.agent_system())
-                self.assertNotIn("AI Helper", server.outbound_greeting())
+                self.assertLess(len(server.agent_system([{"role": "user", "content": "Yes."}])), 4000)
+                self.assertIn("AI Helper", server.outbound_greeting())
             finally:
                 server.DB_PATH = original
 
@@ -72,14 +80,15 @@ class CallModeTests(unittest.TestCase):
         self.assertIn("answer calls on their behalf", first)
         pitched = base + [{"role": "user", "content": "Too many calls"}, {"role": "assistant", "content": "Ava can answer calls on your behalf and send a summary."}]
         second = server.turn_intent(pitched)
-        self.assertIn("200-dollar-per-month", second)
+        self.assertIn("approved market pricing", second)
+        self.assertIn("two or three specific, supported assurances", second)
         mailed = pitched + [{"role": "user", "content": "it is paul at example dot com, my email is paul@example.com"}]
         third = server.turn_intent(mailed)
-        self.assertIn("200-dollar-per-month", third)
+        self.assertIn("preferred email by readback", third)
 
     def test_neutral_is_the_default_muga_tone(self):
         self.assertEqual(server.RUMIK_TONE, "neutral")
-        self.assertIn("[excited] when asking a question", server.AVA_VOICE_RULES)
+        self.assertIn("A question alone does not warrant excitement", server.AVA_VOICE_RULES)
 
     def test_muga_voice_text_starts_every_utterance_with_one_tone(self):
         original = server.RUMIK_MODEL
@@ -87,7 +96,7 @@ class CallModeTests(unittest.TestCase):
         try:
             self.assertEqual(server.voice_text("Hello friend."), "[neutral] Hello friend.")
             self.assertEqual(server.voice_text("[sad] <sigh> Sorry to hear that."), "[sad] <sigh> Sorry to hear that.")
-            self.assertEqual(server.voice_text("Hello <laugh> friend. <scream> Wow."), "[neutral] Hello <laugh> friend. Wow.")
+            self.assertEqual(server.voice_text("Hello <laugh> friend. <scream> Wow."), "[neutral] Hello friend. Wow.")
             self.assertEqual(server.voice_text("Hello <curious> friend."), "[neutral] Hello friend.")
             self.assertEqual(server.voice_text(""), "")
         finally:
@@ -127,7 +136,7 @@ class CallModeTests(unittest.TestCase):
             try:
                 server.init_db()
                 server.set_settings({"call_mode": "hindi"})
-                self.assertNotIn("AI Helper", server.outbound_greeting())
+                self.assertIn("AI सहायक", server.outbound_greeting())
             finally:
                 server.DB_PATH = original
 

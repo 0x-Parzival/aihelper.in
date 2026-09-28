@@ -7,7 +7,7 @@ aihelper.in {
 		X-Frame-Options "DENY"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		Permissions-Policy "camera=(), geolocation=(), payment=(), usb=()"
-		Content-Security-Policy "default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: https://cdn.shopify.com; media-src 'self' data:; object-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com"
+		Content-Security-Policy "default-src 'self'; base-uri 'self'; connect-src 'self' wss://streaming.assemblyai.com; font-src 'self' https://fonts.gstatic.com; frame-ancestors 'none'; frame-src https://spiritual-face.keshavbruh.workers.dev; form-action 'self'; img-src 'self' data: https://cdn.shopify.com; media-src 'self' data:; object-src 'none'; script-src 'self' 'sha256-0jYl88rxgyaprBrZFOhag96tc6VDNZaZK98xk07PWuM='; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com"
 	}
 	@private path /dashboard* /company/* /spiritualai*
 	header @private X-Robots-Tag "noindex, nofollow"

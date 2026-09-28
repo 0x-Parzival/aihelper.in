@@ -28,9 +28,12 @@ class HermesAPITest(unittest.TestCase):
             server.init_db()
             status, _ = self.request("GET", "/internal/ai-helper/leads", secret="wrong")
             self.assertEqual(status, 401)
-            status, lead = self.request("POST", "/internal/ai-helper/leads", {"business_name": "Example", "phone": "+12025550123", "contact_name": "Owner"})
+            status, lead = self.request("POST", "/internal/ai-helper/leads", {"business_name": "Example", "phone": "+12025550123", "contact_name": "Owner", "notes": "Verified business authorization to contact.", "metadata": {"authorized_to_call": True, "callback_at": 0}})
             self.assertEqual(status, 201)
-            with patch.object(server, "outbound_call", return_value={"sid": "test-call"}) as dial:
+            meta = lead["metadata_json"]
+            meta["priority"] = {"source": "jev", "band": "high", "readiness_score": 90, "assessed_at": server.time.time(), "evidence_fingerprint": server.lead_priority.fingerprint(lead, {})}
+            server.ai_helper_update_lead(lead["id"], {"metadata_json": meta})
+            with patch.object(server, "outbound_call", return_value={"sid": "test-call", "status": "queued"}) as dial:
                 status, _ = self.request("POST", f"/internal/ai-helper/leads/{lead['id']}/call")
                 self.assertEqual(status, 201)
                 dial.assert_called_once_with("+12025550123")
@@ -43,6 +46,7 @@ class HermesAPITest(unittest.TestCase):
             self.assertEqual(status, 200)
             self.assertEqual(result["recording_duration"], 10)
             self.assertEqual(result["recording_url"], "https://example.com/recording.mp3")
+            self.assertTrue(result["transcript"])
             status, payment = self.request("POST", f"/internal/ai-helper/leads/{lead['id']}/payments", {"amount": "100"})
             self.assertEqual(status, 201)
             status, result = self.request("POST", f"/internal/ai-helper/payments/{payment['id']}/mark-paid")
@@ -50,9 +54,18 @@ class HermesAPITest(unittest.TestCase):
             status, _ = self.request("GET", "/internal/ai-helper/calls/test-call", secret="wrong")
             self.assertEqual(status, 401)
             for prompt in (server.agent_system(), Campaign.from_env("AI Helper").monthly_price):
-                self.assertIn("₹20,000", prompt)
-                self.assertIn("$100/month", prompt)
-                self.assertIn("$200/month", prompt)
+                self.assertIn("$200 USD", prompt)
+                self.assertIn("$500 USD", prompt)
+
+    def test_unauthorized_lead_cannot_be_dialed(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(server, "DB_PATH", Path(directory) / "test.db"), patch.dict(server.os.environ, {"INTERNAL_AI_HELPER_SECRET": "test-secret"}):
+            server.init_db()
+            _, lead = self.request("POST", "/internal/ai-helper/leads", {"business_name": "No Consent", "phone": "+12025550123"})
+            with patch.object(server, "outbound_call") as dial:
+                status, result = self.request("POST", f"/internal/ai-helper/leads/{lead['id']}/call")
+            self.assertEqual(status, 400)
+            self.assertIn("authorized", result["error"])
+            dial.assert_not_called()
 
 
 if __name__ == "__main__":

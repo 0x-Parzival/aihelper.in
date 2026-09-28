@@ -55,6 +55,16 @@ export const auth = betterAuth({
   basePath: "/auth",
   secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins: [baseURL],
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 100,
+    customRules: {
+      "/request-password-reset": { window: 3600, max: 3 },
+      "/send-verification-email": { window: 3600, max: 3 },
+    },
+  },
+  advanced: { ipAddress: { ipAddressHeaders: ["x-forwarded-for"] }, useSecureCookies: true },
   emailAndPassword: {
     enabled: true,
     // The HTTP sign-up endpoint is blocked in server.mjs. The owner dashboard

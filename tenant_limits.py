@@ -7,7 +7,7 @@ import time
 
 CURRENT = ContextVar("business", default=None)
 RESERVATION = ContextVar("reservation", default=None)
-KEYS = frozenset({"GROQ_API_KEY", "RUMIK_API_KEY", "ASSEMBLYAI_API_KEY", "SARVAM_API_KEY", "TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_PHONE_NUMBER", "PLIVO_AUTH_ID", "PLIVO_AUTH_TOKEN", "PLIVO_PHONE_NUMBER", "TELNYX_API_KEY", "TELNYX_ACCOUNT_SID", "TELNYX_TEXML_APPLICATION_SID", "TELNYX_PHONE_NUMBER", "TELNYX_PUBLIC_KEY"})
+KEYS = frozenset({"OPENROUTER_API_KEY", "GROQ_API_KEY", "RUMIK_API_KEY", "ASSEMBLYAI_API_KEY", "SARVAM_API_KEY", "TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_PHONE_NUMBER", "PLIVO_AUTH_ID", "PLIVO_AUTH_TOKEN", "PLIVO_PHONE_NUMBER", "TELNYX_API_KEY", "TELNYX_ACCOUNT_SID", "TELNYX_TEXML_APPLICATION_SID", "TELNYX_PHONE_NUMBER", "TELNYX_PUBLIC_KEY"})
 PLANS = {"usd_100": 60_000, "inr_10000": 60_000, "usd_200": None, "inr_20000": None}
 
 
@@ -43,7 +43,7 @@ def configure(conn, slug, data):
     provider = config.get("provider")
     if not isinstance(provider, str) or provider not in {"twilio", "plivo", "telnyx", "auto"} or not isinstance(keys, dict) or set(keys) - KEYS:
         raise ValueError("Specify provider and supported credential names")
-    required = {"GROQ_API_KEY", "RUMIK_API_KEY", "SARVAM_API_KEY" if config.get("call_mode") == "hindi" else "ASSEMBLYAI_API_KEY"}
+    required = {"GROQ_API_KEY", "RUMIK_API_KEY", "ASSEMBLYAI_API_KEY"}
     required |= ({"TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_PHONE_NUMBER"} if provider == "twilio" else {"PLIVO_AUTH_ID", "PLIVO_AUTH_TOKEN", "PLIVO_PHONE_NUMBER"} if provider == "plivo" else {"TELNYX_API_KEY", "TELNYX_ACCOUNT_SID", "TELNYX_TEXML_APPLICATION_SID", "TELNYX_PHONE_NUMBER", "TELNYX_PUBLIC_KEY"} if provider == "telnyx" else {"PLIVO_AUTH_ID", "PLIVO_AUTH_TOKEN", "PLIVO_PHONE_NUMBER", "TELNYX_API_KEY", "TELNYX_ACCOUNT_SID", "TELNYX_TEXML_APPLICATION_SID", "TELNYX_PHONE_NUMBER", "TELNYX_PUBLIC_KEY"})
     if any(not isinstance(v, str) or not v.strip() or len(v) > 4096 or any(ord(char) < 32 for char in v) for v in keys.values()) or not required <= keys.keys():
         raise ValueError("Business credentials are incomplete; shared credentials are never used")
@@ -62,7 +62,7 @@ def configure(conn, slug, data):
     plan, period, ends = config.get("plan"), config.get("period"), config.get("ends_at")
     if not isinstance(plan, str) or plan not in PLANS or not isinstance(period, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", period) or type(ends) is not int or ends <= time.time():
         raise ValueError("Specify a plan, unique paid period ID and future ends_at UTC timestamp")
-    for name, default, lower, upper in (("max_call_seconds", 600, 10, 1800), ("silence_seconds", 90, 30, 300), ("max_turns", 30, 5, 100)):
+    for name, default, lower, upper in (("max_call_seconds", 10800, 10, 10800), ("silence_seconds", 90, 30, 300), ("max_turns", 0, 0, 500)):
         value = config.setdefault(name, default)
         if type(value) is not int or not lower <= value <= upper:
             raise ValueError(f"Invalid {name}")
@@ -139,7 +139,7 @@ def settle(conn, sid, duration):
 
 
 def repetition(messages):
-    texts = [re.sub(r"\W+", " ", m.get("content", "").casefold()).strip() for m in messages if m.get("role") == "user" and not m.get("content", "").startswith("Private")]
+    texts = [re.sub(r"\W+", " ", m.get("content", "").casefold()).strip() for m in messages if m.get("role") == "user" and not m.get("_private")]
     # ponytail: exact repeated substantive requests only; review logged endings before adding a classifier.
     if len(texts) < 3 or len(texts[-1].split()) < 4:
         return ""

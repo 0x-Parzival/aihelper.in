@@ -9,7 +9,7 @@ User=www-data
 Group=www-data
 WorkingDirectory=/opt/aihelper
 Environment=EMOTION_WORKER_URL=http://127.0.0.1:8010
-ExecStart=/usr/bin/python3 /opt/aihelper/server.py
+ExecStart=/opt/aihelper/.venv/bin/python /opt/aihelper/server.py
 Restart=always
 RestartSec=3
 # secrets live in /opt/aihelper/.env (root-owned, 600)

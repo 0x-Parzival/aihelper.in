@@ -6,14 +6,15 @@ Hermes/operator routes require `X-AI-Helper-Secret`. Customer dashboard credenti
 
 ## Provider routing — read this first
 
-The live dual-channel setup is country-routed, not provider-routed:
+Operator calls default to Telnyx globally. Explicit tenant `provider` values are honored.
+The optional `provider: "auto"` mode preserves dual-channel routing:
 
 | Destination | Provider | Webhook | Stream |
 | --- | --- | --- | --- |
 | `+91...` (India) | Plivo | `/plivo/answer` | `/plivo/stream` |
 | Any other E.164 number | Telnyx | `/telnyx/voice` | `/telnyx/stream` |
 
-Outbound routing uses the `to` number. Inbound routing uses the provider webhook configured on that phone number. Do not add caller-country heuristics or manually choose Telnyx for an Indian destination; `call_provider()` is the single routing rule in `server.py`.
+Outbound auto routing uses the `to` number. Inbound routing uses the provider webhook configured on that phone number. `call_provider()` is the single routing rule in `server.py`. Carrier permissions and destination availability still apply.
 
 For a business using both channels, configure `provider: "auto"` and supply both Plivo and Telnyx credentials. The Telnyx number is used for international inbound calls; the Plivo number is used for Indian inbound calls. Keep both numbers in E.164 format.
 
@@ -28,14 +29,14 @@ Use `POST /internal/ai-helper/businesses/{slug}/service` after creating the comp
 | `plan` | `usd_100`, `inr_10000`, `usd_200`, or `inr_20000` |
 | `period` | Unique paid subscription period ID, such as an invoice ID |
 | `ends_at` | Actual paid period expiry, integer Unix timestamp in UTC |
-| `max_call_seconds` | Default 600; allowed 10–1800 |
+| `max_call_seconds` | Default 10,800 (3 hours); allowed 10–10,800 |
 | `silence_seconds` | Default 90; allowed 30–300 |
-| `max_turns` | Default 30; allowed 5–100 |
+| `max_turns` | Default 0 (no turn cap); allowed 0–500 |
 | `paused` | Boolean, default false |
 | `call_mode` | `english` (default) or `hindi` |
 | `business_knowledge`, `greeting` | Optional business-specific text |
 
-Required keys for `provider: "auto"`: `GROQ_API_KEY`, `RUMIK_API_KEY`, and `ASSEMBLYAI_API_KEY` for English or `SARVAM_API_KEY` for Hindi, plus `PLIVO_AUTH_ID`, `PLIVO_AUTH_TOKEN`, `PLIVO_PHONE_NUMBER`, `TELNYX_API_KEY`, `TELNYX_ACCOUNT_SID`, `TELNYX_TEXML_APPLICATION_SID`, `TELNYX_PHONE_NUMBER`, and `TELNYX_PUBLIC_KEY`.
+Required keys for `provider: "auto"`: `GROQ_API_KEY`, `RUMIK_API_KEY`, and `ASSEMBLYAI_API_KEY` for English and Hindi, plus `PLIVO_AUTH_ID`, `PLIVO_AUTH_TOKEN`, `PLIVO_PHONE_NUMBER`, `TELNYX_API_KEY`, `TELNYX_ACCOUNT_SID`, `TELNYX_TEXML_APPLICATION_SID`, `TELNYX_PHONE_NUMBER`, and `TELNYX_PUBLIC_KEY`. Optional per-business `OPENROUTER_API_KEY` enables Jev; tenant calls never borrow the operator's Jev key.
 
 Minimal service configuration shape:
 
@@ -77,7 +78,7 @@ Verified terminal callbacks settle the reservation idempotently. Failed dials wi
 
 ## Abuse controls and their limits
 
-Live calls stop on the duration cap, turn cap or sustained lack of recognized caller input. The third identical substantive request receives a warning; the fourth ends the call. Short repeated responses such as “yes” do not trigger this rule. The assistant redirects unrelated or deliberately prolonged requests to the business purpose. These signals limit cost; they do not establish a person's intent. Long monologues without recognized final transcripts can hit the silence limit, so tune that setting to the business's needs.
+Live calls stop on the duration cap, an optional turn cap or sustained lack of recognized caller input. The third identical substantive request receives a warning; the fourth ends the call. Short repeated responses such as “yes” do not trigger this rule. The assistant redirects unrelated or deliberately prolonged requests to the business purpose. These signals limit cost; they do not establish a person's intent. Long monologues without recognized final transcripts can hit the silence limit, so tune that setting to the business's needs.
 
 The fallback speech-gather path also limits duration and turns, warns on repetition, and ends after a second consecutive empty response. Provider-level duration limits survive a lost audio connection or application restart. A separate timer covers live streams even when no media packets arrive. Hangup requests address one specific provider call; they never terminate the whole account.
 

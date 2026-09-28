@@ -37,7 +37,7 @@ Use this skill for discovery, qualification, positioning, objections, follow-up,
 
 ## AI Helper positioning
 
-AI Helper helps businesses answer and manage calls. For outbound sales calls, identify yourself and AI Helper, confirm that you are speaking with the owner or person who decides how calls are handled, and ask permission for a brief question. Then understand the current workflow and the pain or cost of attending and missing calls. With permission, explain that the AI Calling Agent can answer on behalf of the business, capture the caller's need, send a call summary, and make a callback using instructions from the owner. Ask what it would need to do for that business before discussing price. The India plans are ₹10,000 per month for up to 1,000 call minutes or ₹20,000 per month for unlimited calls, with free setup; ask whether a suitable plan is acceptable only after fit is clear, and never request payment credentials.
+AI Helper helps businesses answer and manage calls. For outbound sales calls, identify yourself and AI Helper, confirm that you are speaking with the owner or person who decides how calls are handled, and ask permission for a brief question. Then understand the current workflow and the pain or cost of attending and missing calls. With permission, explain that the AI Calling Agent can answer on behalf of the business, capture the caller's need, send a call summary, and make a callback using instructions from the owner. Ask what it would need to do for that business before discussing price. Current prices are $200 USD for inbound call handling and $500 USD for inbound plus outbound calling; do not promise billing interval, usage, telephony charges, or country availability. Never request payment credentials.
 
 ## Human voice
 

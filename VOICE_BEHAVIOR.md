@@ -59,8 +59,10 @@ updates only per-call style state; `response_style()` returns a dictionary.
 
 ## Integration checklist
 
-- Set `RUMIK_SPEAKER=speaker_1`; all calls use this fixed speaker. `RUMIK_DEFAULT_ACCENT`
-  is used only when the caller's E.164 calling region is not mapped.
+- Current Muga integration uses one leading tone and optional compatible inline event,
+  chosen by Jev when configured. Muga does not use `speaker_1`. See
+  [VOICE_RESEARCH.md](VOICE_RESEARCH.md) for current runtime behavior and limits;
+  the framework-oriented checklist below is guidance, not a claim that every hook is connected.
 - Before the greeting, select the baseline profile from the business name,
   configured campaign, and authorized call objective. Use
   `RUMIK_BUSINESS_VOICE_PROFILE` for a business-approved exact description;

@@ -1,6 +1,6 @@
 # Deploying aihelper.in
 
-Target: any $5-10/mo VPS (Ubuntu 22.04+). Stack: Caddy (TLS) -> python3 server.py -> SQLite.
+Fresh-install example below: Caddy (TLS) -> Python -> SQLite. The live `aihelper.in` site runs Nginx; its current virtual host is [nginx-aihelper.conf](nginx-aihelper.conf). Keep `server_tokens off` in the main Nginx config. When the homepage's JSON-LD block changes, update its SHA-256 hash in the Content Security Policy before deploying the changed page.
 
 ## One-time server setup
 
@@ -17,7 +17,9 @@ mkdir -p /opt/aihelper
 # rsync -av --exclude .git --exclude aihelper.db* ./ root@YOUR_VPS:/opt/aihelper/
 
 cd /opt/aihelper
-pip3 install -r requirements.txt
+# Python 3.11 must be installed first; use the same virtualenv for both services.
+python3.11 -m venv .venv
+.venv/bin/pip install -r requirements.txt
 cd auth && npm install --omit=dev && npm run migrate && cd ..
 chown -R www-data:www-data /opt/aihelper
 chmod 700 /opt/aihelper

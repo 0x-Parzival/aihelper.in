@@ -31,6 +31,58 @@ class LiveVoiceTests(unittest.TestCase):
         self.assertFalse(server.allow_request("test", 2, 60, now=102))
         self.assertTrue(server.allow_request("test", 2, 60, now=160))
 
+    def test_paid_limits_survive_restart_and_apply_together(self):
+        rules = [("callback:ip", 2, 60), ("callback:number", 1, 60)]
+        self.assertTrue(server.allow_paid_request(rules, now=100))
+        self.assertFalse(server.allow_paid_request(rules, now=101))
+        self.assertTrue(server.allow_paid_request([("callback:ip", 2, 60)], now=101))
+        self.assertFalse(server.allow_paid_request([("callback:ip", 2, 60)], now=102))
+        self.assertTrue(server.allow_paid_request(rules, now=160))
+
+    def test_caller_private_prefix_remains_public(self):
+        messages = [{"role": "user", "content": "Private chef needed for my cafe"}]
+        self.assertEqual(server.conversation_window(messages), messages)
+        self.assertEqual(server.demo_context(messages), '[{"role": "user", "content": "Private chef needed for my cafe"}]')
+
+    def test_demo_context_keeps_introduction_and_recent_needs(self):
+        messages = [
+            {"role": "user", "content": "I'm Mira"},
+            {"role": "assistant", "content": "Nice to meet you, Mira."},
+            *[{"role": "user", "content": text} for text in ["I run a cafe", "three", "four", "five", "I need missed-call coverage"]],
+            {"role": "assistant", "content": "We can continue this by phone."},
+        ]
+        context = json.loads(server.demo_context(messages))
+        self.assertEqual(context[0], {"role": "user", "content": "I'm Mira"})
+        self.assertIn({"role": "assistant", "content": "Nice to meet you, Mira."}, context)
+        self.assertIn({"role": "user", "content": "I need missed-call coverage"}, context)
+        self.assertEqual(context[-1]["role"], "assistant")
+
+    def test_website_demo_session_expires_after_one_minute_and_is_ip_bound(self):
+        session = server.create_voice_demo_session("192.0.2.1", now=100)
+        self.assertTrue(server.voice_demo_session_active(session, "192.0.2.1", now=159.999))
+        self.assertFalse(server.voice_demo_session_active(session, "192.0.2.2", now=120))
+        self.assertFalse(server.voice_demo_session_active(session, "192.0.2.1", now=160))
+
+    def test_call_status_progresses_to_pickup_without_backsliding(self):
+        server.start_call("progress-test", "outbound", "+14155550123")
+        server.update_call_status("progress-test", "ringing")
+        self.assertEqual(server.load_call("progress-test")["status"], "ringing")
+        server.update_call_status("progress-test", "answered")
+        call = server.load_call("progress-test")
+        self.assertEqual(call["status"], "in-progress")
+        self.assertIsNotNone(call["picked_up_at"])
+        server.update_call_status("progress-test", "ringing")
+        self.assertEqual(server.load_call("progress-test")["status"], "in-progress")
+
+    def test_recording_rejects_untrusted_host(self):
+        with patch.object(server, "RECORDINGS_DIR", Path(self.temp_directory.name) / "recordings"):
+            with patch("urllib.request.build_opener") as request:
+                with self.assertRaisesRegex(ValueError, "Untrusted recording URL"):
+                    server.cached_recording("safe-call", "https://127.0.0.1/private")
+                request.assert_not_called()
+        with self.assertRaisesRegex(ValueError, "Untrusted recording URL"):
+            server.RecordingRedirect().redirect_request(None, None, 302, "", {}, "http://127.0.0.1/private")
+
     def test_company_password_is_hashed_and_verified(self):
         stored = server.password_hash("a secure company password")
         self.assertNotIn("a secure company password", stored)
@@ -50,7 +102,7 @@ class LiveVoiceTests(unittest.TestCase):
         transcript = [m for m in json.loads(call["transcript"]) if m.get("role") == "assistant"]
         self.assertEqual(len(transcript), 1)
         self.assertNotIn("owner", transcript[0]["content"])
-        self.assertNotIn("AI Helper", transcript[0]["content"])
+        self.assertIn("AI assistant", transcript[0]["content"])
 
     def test_company_calls_are_isolated_and_keep_follow_up(self):
         company = server.create_company("Acme", "a secure company password")
@@ -83,6 +135,11 @@ class LiveVoiceTests(unittest.TestCase):
         self.assertTrue(server.silence_nudge_due(base, 120.0))
         self.assertFalse(server.silence_nudge_due({**base, "speaking": True}, 200.0))
         self.assertFalse(server.silence_nudge_due({"speaking": False, "last_activity": 100.0, "last_spoken_at": 50.0}, 112.0))
+
+    def test_call_routing_prompts_get_a_bounded_wait(self):
+        for text in ("Press 1 for sales or 2 for support", "Please hold while I transfer you", "I'll put you through now", "Please wait one moment"):
+            self.assertEqual(server.call_wait_seconds(text), 60)
+        self.assertEqual(server.call_wait_seconds("How can I help with your business calls?"), 0)
 
     def test_call_messages_hold_private_intent_never_spoken(self):
         call = {"transcript": json.dumps([{"role": "user", "content": "Too many calls"}]), "context": "owner demo", "company_slug": "", "number": "+14155550123"}
@@ -162,6 +219,7 @@ class LiveVoiceTests(unittest.TestCase):
         # Greeting bytes made during ring time play with no TTS wait at all.
         server.GREET_CACHE.clear()
         server.start_call("CA-pre", "outbound", "+442071838750", "owner demo")
+        server.update_call_status("CA-pre", "in-progress")
         server._store_greet("CA-pre", server.silence_wav(0.2))
 
         class Socket:
@@ -311,6 +369,8 @@ class LiveVoiceTests(unittest.TestCase):
         chunks, remainder = server.speech_chunks(remainder, final=True)
         self.assertEqual(chunks, ["If someone calls while your staff is busy"])
         self.assertEqual(remainder, "")
+        question = "How are you currently handling those high volumes of incoming calls at your agency"
+        self.assertEqual(server.speech_chunks(question), ([], question))
 
     def test_first_phrase_is_a_short_complete_sentence(self):
         phrase, rest = server.take_speakable_phrase("Yes, I can help. What are you trying to do?", first=True)
@@ -337,11 +397,11 @@ class LiveVoiceTests(unittest.TestCase):
         frustrated = server.voice_description(accent, {"emotion": "frustrated"})
         self.assertEqual(neutral, server.RUMIK_DESCRIPTION)
         self.assertEqual(neutral, frustrated)
-        self.assertIn("high-pitched female voice", neutral)
+        self.assertIn("adult female voice", neutral)
 
     def test_outbound_greeting_confirms_the_contact_before_the_pitch(self):
-        self.assertNotIn("AI Helper", server.outbound_greeting({"contact_name": "Priya"}))
-        self.assertNotIn("AI Helper", server.outbound_greeting())
+        self.assertIn("AI Helper", server.outbound_greeting({"contact_name": "Priya"}))
+        self.assertIn("AI assistant", server.outbound_greeting())
 
     def test_only_explicit_adult_voice_requests_change_persona(self):
         self.assertEqual(server.requested_voice_persona("Please change your voice to a woman."), "female")
@@ -370,10 +430,10 @@ class LiveVoiceTests(unittest.TestCase):
         finally:
             server.tenant_limits.CURRENT.reset(token)
         self.assertIn("Your name is Ava", prompt)
-        self.assertIn("Laugh with the caller", prompt)
-        self.assertIn("briefly and specifically appreciate", prompt)
-        self.assertIn("answer their actual question directly", prompt)
-        self.assertIn("playful observational humor", prompt)
+        self.assertIn("never force jokes", prompt)
+        self.assertIn("one useful question", prompt)
+        self.assertIn("Answer the caller's actual question directly", prompt)
+        self.assertIn("observational humor", prompt)
 
     def test_every_mulberry_utterance_uses_a_fixed_preset_speaker(self):
         first = server.rumik_voice_options()
@@ -461,10 +521,11 @@ class LiveVoiceTests(unittest.TestCase):
         asyncio.run(run_once(session))
         asyncio.run(run_once(session))
         self.assertEqual(session["groq_failures"], 2)
-        self.assertIn("understand your situation", session["messages"][-1]["content"])
+        self.assertIn("response issue", session["messages"][-1]["content"])
         asyncio.run(run_once(session))
         self.assertEqual(session["groq_failures"], 3)
-        self.assertIn("call you back shortly", session["messages"][-1]["content"])
+        self.assertIn("Please try again later", session["messages"][-1]["content"])
+        self.assertNotIn("call you back", session["messages"][-1]["content"])
 
 
 if __name__ == "__main__":

@@ -26,7 +26,7 @@ class BusinessLimitsTest(unittest.TestCase):
         server.init_db()
         for i, slug in enumerate(("alpha", "beta")):
             server.create_company(slug, "test-password")
-            config = {"provider": "twilio", "plan": "usd_100", "period": "paid-1", "ends_at": int(time.time()) + 86400,
+            config = {"provider": "twilio", "plan": "usd_100", "period": "paid-1", "ends_at": int(time.time()) + 86400, "max_call_seconds": 600,
                       "keys": {name: slug + "-" + name for name in ("GROQ_API_KEY", "RUMIK_API_KEY", "ASSEMBLYAI_API_KEY", "TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN")}}
             config["keys"]["TWILIO_PHONE_NUMBER"] = f"+1202555012{i}"
             with server.db() as conn:
@@ -171,7 +171,7 @@ class BusinessLimitsTest(unittest.TestCase):
         keys.update(PLIVO_AUTH_ID="alpha-plivo", PLIVO_AUTH_TOKEN="plivo-token", PLIVO_PHONE_NUMBER="+12025550120")
         with server.db() as conn:
             limits.configure(conn, "alpha", {"provider": "plivo", "keys": keys})
-        with patch.object(server, "plivo_request", return_value={"request_uuid": "request-not-call"}) as request:
+        with patch.object(server, "cache_audio", return_value="https://example.com/greeting.wav"), patch.object(server, "plivo_request", return_value={"request_uuid": "request-not-call"}) as request:
             call = server.business_outbound("+12025550999", "alpha")
         self.assertEqual(request.call_args.args[1]["time_limit"], 600)
         with server.db() as conn:
@@ -218,6 +218,7 @@ class BusinessLimitsTest(unittest.TestCase):
             def __init__(self, payload):
                 self.payload = payload
                 self.headers = {"Content-Type": "audio/mpeg"}
+                self.url = "https://s3.amazonaws.com/fresh.mp3"
 
             def __enter__(self):
                 return self
@@ -225,13 +226,14 @@ class BusinessLimitsTest(unittest.TestCase):
             def __exit__(self, *args):
                 return False
 
-            def read(self):
+            def read(self, _size=-1):
                 return self.payload
 
-        expired = urllib.error.HTTPError("https://old", 403, "expired", {}, io.BytesIO())
+        expired = urllib.error.HTTPError("https://s3.amazonaws.com/old.mp3", 403, "expired", {}, io.BytesIO())
         with tempfile.TemporaryDirectory() as directory, patch.object(server, "RECORDINGS_DIR", Path(directory)):
-            with patch("urllib.request.urlopen", side_effect=[expired, FakeResp(b"fresh-audio")]), patch.object(server, "refresh_telnyx_recording", return_value="https://fresh") as refresh:
-                payload, ctype = server.cached_recording("v3:expired", "https://old")
+            with patch("urllib.request.build_opener") as opener, patch.object(server, "refresh_telnyx_recording", return_value="https://s3.amazonaws.com/fresh.mp3") as refresh:
+                opener.return_value.open.side_effect = [expired, FakeResp(b"fresh-audio")]
+                payload, ctype = server.cached_recording("v3:expired", "https://s3.amazonaws.com/old.mp3")
             self.assertEqual((payload, ctype), (b"fresh-audio", "audio/mpeg"))
             refresh.assert_called_once_with("v3:expired")
             self.assertTrue((Path(directory) / "v3:expired.mp3").exists())

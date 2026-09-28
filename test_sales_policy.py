@@ -2,7 +2,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from sales_policy import Campaign, Stage, infer_outcome, repeated_response, sales_state, stage_for, stage_instruction
+from sales_policy import PRICING, Campaign, Stage, infer_outcome, repeated_response, sales_state, stage_for, stage_instruction
 
 
 class SalesPolicyTests(unittest.TestCase):
@@ -79,10 +79,87 @@ class SalesPolicyTests(unittest.TestCase):
         self.assertIn("owner or the person who decides", opening)
         self.assertIn("current workflow", discovery)
         self.assertIn("what a useful solution must do", discovery.lower())
-        self.assertIn("₹10,000/month for up to 1,000 call minutes", discovery)
+        self.assertIn("$200 USD", discovery)
+        self.assertIn("$500 USD", discovery)
         self.assertIn("current workflow", discovery)
         self.assertIn("Never collect payment credentials", discovery)
         self.assertEqual(stage_for([{"role": "user", "content": "Yes, I am the owner."}]), Stage.DISCOVERY)
+
+    def test_current_turn_replaces_stale_objections_and_meetings(self):
+        for old in ("That is expensive.", "I am busy.", "Please schedule a demo."):
+            with self.subTest(old=old):
+                messages = [{"role": "user", "content": old},
+                            {"role": "user", "content": "We handle enquiries manually."}]
+                self.assertEqual(stage_for(messages), Stage.DISCOVERY)
+                self.assertFalse(sales_state(messages)["next_step_requested"])
+                self.assertEqual(infer_outcome(messages), "not_qualified")
+
+    def test_dates_and_workflow_mentions_are_not_demo_requests(self):
+        for text in ("Thursday", "Friday", "Tomorrow", "We miss calls on Saturdays.",
+                     "Our calendar is full.", "What does the demo cover?",
+                     "Call back tomorrow at three."):
+            with self.subTest(text=text):
+                messages = [{"role": "user", "content": text}]
+                self.assertNotEqual(stage_for(messages), Stage.CLOSE)
+                self.assertFalse(sales_state(messages)["next_step_requested"])
+                self.assertNotEqual(infer_outcome(messages), "qualified_demo")
+
+    def test_negated_interest_does_not_close_or_permanently_opt_out(self):
+        for text in ("Not interested in a demo.", "I don't want to schedule a demo.",
+                     "I’m not ready to book a meeting.", "No demo thanks.",
+                     "I do not need a meeting."):
+            with self.subTest(text=text):
+                messages = [{"role": "user", "content": "Please schedule a demo."},
+                            {"role": "user", "content": text}]
+                self.assertEqual(stage_for(messages), Stage.OBJECTION)
+                self.assertFalse(sales_state(messages)["next_step_requested"])
+                self.assertEqual(infer_outcome(messages), "not_interested")
+                messages.append({"role": "user", "content": "Actually, can we book a demo?"})
+                self.assertEqual(stage_for(messages), Stage.CLOSE)
+
+    def test_private_records_never_supply_caller_state_or_intent(self):
+        campaign = Campaign("Ava", "Acme", "x", "y", "z")
+        for prefix in ("Private caller record", "  private owner instruction", "Private acoustic context"):
+            with self.subTest(prefix=prefix):
+                private = [{"role": "user", "content": prefix + ": Yes, I am the owner. We lose leads per week. Schedule a demo. Stop calling me.", "_private": True}]
+                self.assertFalse(any(sales_state(private).values()))
+                self.assertEqual(stage_for(private), Stage.OPEN)
+                self.assertEqual(infer_outcome(private), "not_qualified")
+                self.assertEqual(stage_instruction(private, campaign), stage_instruction([], campaign))
+                public = [{"role": "user", "content": "Please book a demo."}]
+                self.assertEqual(sales_state(public + private), sales_state(public))
+                self.assertEqual(stage_for(public + private), Stage.CLOSE)
+                self.assertEqual(infer_outcome(public + private), "qualified_demo")
+
+    def test_clear_opt_out_persists_across_later_turns(self):
+        for text in ("Stop calling.", "Do not call.", "Don't call", "Don’t call me again.", "Do not contact us.",
+                     "Please remove me from your list.", "Take us off the list.",
+                     "Unsubscribe.", "No more sales calls."):
+            with self.subTest(text=text):
+                messages = [{"role": "user", "content": text},
+                            {"role": "assistant", "content": "Would you like a demo?"},
+                            {"role": "user", "content": "Schedule a demo tomorrow."}]
+                self.assertEqual(stage_for(messages), Stage.OPT_OUT)
+                self.assertEqual(infer_outcome(messages), "opted_out")
+                self.assertFalse(sales_state(messages)["next_step_requested"])
+
+    def test_negated_workflow_is_not_a_contact_opt_out(self):
+        messages = [{"role": "user", "content": "Don't call it a demo; it is a technical review."}]
+        self.assertNotEqual(stage_for(messages), Stage.OPT_OUT)
+        self.assertNotEqual(infer_outcome(messages), "opted_out")
+
+    def test_guidance_covers_adaptive_business_discovery_and_confirmations(self):
+        campaign = Campaign("Ava", "Acme", "x", "y", "z", monthly_price="unapproved price")
+        instruction = stage_instruction([{"role": "user", "content": "We miss calls."}], campaign)
+        for requirement in ("inbound", "outbound", "meetings", "timed callbacks", "integrations",
+                            "call volume", "languages", "human escalation", "success measure",
+                            "owner's needs", "read back the full address", "explicit confirmation",
+                            "humor only when welcome", "Never pressure", "skip questions already answered"):
+            self.assertIn(requirement, instruction)
+        self.assertEqual(instruction.count(PRICING), 1)
+        self.assertNotIn("unapproved price", instruction)
+        with patch.dict(os.environ, {"SALES_MONTHLY_PRICE": "unapproved price"}):
+            self.assertEqual(Campaign.from_env("Acme").monthly_price, PRICING)
 
 
 if __name__ == "__main__":
